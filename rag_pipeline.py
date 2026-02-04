@@ -39,23 +39,37 @@ vector_store = FAISS.from_texts(
 
 #print(vector_store.index_to_docstore_id)
 
-retriever=vector_store.as_retriever(search_kwargs={"k": 2})
+retriever=vector_store.as_retriever(search_kwargs={"k": 4})
+
 
 prompt = PromptTemplate(
     template="""
-      You are a helpful assistant.
-      Answer ONLY from the provided transcript context.
-      If the context is insufficient, just say you don't know.
+You are a helpful assistant.
 
-      {context}
-      Question: {question}
-    """,
-    input_variables = ['context', 'question']
+Using ONLY the transcript context below:
+- Answer clearly and completely
+- If the topic is discussed, summarize the key points in bullet points
+- Do NOT add information that is not in the transcript
+
+Transcript Context:
+{context}
+
+Question:
+{question}
+
+Answer:
+""",
+    input_variables=["context", "question"]
 )
+
 
 question="was the topiv of llm was discussed in the video? If yes then what was discussed ?"
 relevant_chunks=retriever.invoke(question)
 
+'''for i, doc in enumerate(relevant_chunks, 1):
+    print(f"\n--- Retrieved Chunk {i} ---\n")
+    print(doc.page_content[:300])
+'''
 
 context = "\n\n".join(doc.page_content for doc in relevant_chunks)
 
@@ -72,4 +86,4 @@ llm = ChatGroq(
 )
 
 answer=llm.invoke(final_prompt)
-print(answer)
+print(answer.content)
